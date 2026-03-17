@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Sender</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        input, button { padding: 12px; margin: 10px; width: 80%; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h3>GPS 追蹤傳送</h3>
+    <input type="password" id="pw" placeholder="輸入密鑰">
+    <button onclick="start()" id="btn">啟動 (每分鐘傳送)</button>
+    <p id="msg">狀態：待機</p>
+
+    <script>
+        let timer = null;
+        // 【請填入你的 Worker 網址】
+        const API_URL = "https://gpstracker.dttmazu.workers.dev";
+
+        function start() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+                document.getElementById('btn').innerText = "啟動";
+                return;
+            }
+            document.getElementById('btn').innerText = "停止";
+            send();
+            timer = setInterval(send, 60000); // 60秒
+        }
+
+        function send() {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const payload = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    device_key: document.getElementById('pw').value
+                };
+                try {
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    document.getElementById('msg').innerText = "最後傳送：" + new Date().toLocaleTimeString();
+                } catch (e) { document.getElementById('msg').innerText = "錯誤：" + e; }
+            }, null, { enableHighAccuracy: true });
+        }
+    </script>
+</body>
+</html>
