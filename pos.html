@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小吃店 POS 系統</title>
+  <style>
+    :root {
+      --primary: #e67e22;
+      --primary-dark: #ca6f1e;
+      --bg: #f5f5f5;
+      --white: #ffffff;
+      --gray: #ecf0f1;
+      --dark: #2c3e50;
+      --text: #34495e;
+      --danger: #e74c3c;
+      --success: #27ae60;
+      --info: #2980b9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── Header ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    header h1 { font-size: 1.3rem; }
+    header .header-btns { display: flex; gap: 8px; }
+    header button {
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(255,255,255,.5);
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: .85rem;
+    }
+    header button:hover { background: rgba(255,255,255,.35); }
+
+    /* ── Main layout ── */
+    .main { display: flex; height: calc(100vh - 53px); overflow: hidden; }
+
+    /* ── LEFT: Menu panel ── */
+    .menu-panel {
+      flex: 1 1 60%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 12px;
+      gap: 10px;
+    }
+    .category-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .cat-btn {
+      padding: 6px 14px;
+      border: 2px solid var(--primary);
+      background: var(--white);
+      color: var(--primary);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: .85rem;
+      transition: .15s;
+    }
+    .cat-btn.active, .cat-btn:hover { background: var(--primary); color: #fff; }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 4px;
+    }
+    .menu-item {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,.1);
+      transition: transform .12s, box-shadow .12s;
+      user-select: none;
+      position: relative;
+    }
+    .menu-item:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,.15); }
+    .menu-item:active { transform: scale(.97); }
+    .menu-item .icon { font-size: 2rem; margin-bottom: 6px; }
+    .menu-item .name { font-size: .85rem; font-weight: bold; margin-bottom: 4px; }
+    .menu-item .price { font-size: 1rem; color: var(--primary); font-weight: bold; }
+    .menu-item .edit-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #bbb;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: .7rem;
+      line-height: 20px;
+      cursor: pointer;
+      display: none;
+    }
+    .edit-mode .menu-item .edit-btn { display: block; }
+
+    /* ── RIGHT: Order panel ── */
+    .order-panel {
+      flex: 0 0 320px;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #ddd;
+    }
+    .order-header {
+      background: var(--dark);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .order-header h2 { font-size: 1rem; }
+    .order-num { font-size: .8rem; opacity: .7; }
+    .order-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .order-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 4px;
+      border-bottom: 1px solid var(--gray);
+    }
+    .order-row .item-name { flex: 1; font-size: .88rem; }
+    .qty-ctrl { display: flex; align-items: center; gap: 4px; }
+    .qty-ctrl button {
+      width: 24px; height: 24px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qty-ctrl .minus { background: #e74c3c; color: #fff; }
+    .qty-ctrl .plus  { background: var(--success); color: #fff; }
+    .qty-ctrl span { min-width: 20px; text-align: center; font-weight: bold; }
+    .order-row .item-subtotal { min-width: 52px; text-align: right; font-weight: bold; color: var(--primary); }
+
+    .order-footer {
+      padding: 12px 16px;
+      border-top: 2px solid var(--gray);
+    }
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .total-line .amount { color: var(--primary); font-size: 1.3rem; }
+    .footer-btns { display: flex; gap: 8px; }
+    .btn-clear {
+      flex: 0 0 auto;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: .9rem;
+    }
+    .btn-checkout {
+      flex: 1;
+      background: var(--success);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    .btn-clear:hover { background: #c0392b; }
+    .btn-checkout:hover { background: #1e8449; }
+    .btn-checkout:disabled { background: #aaa; cursor: default; }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      width: min(440px, 95vw);
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    .modal h3 { margin-bottom: 16px; font-size: 1.1rem; color: var(--dark); }
+    .modal label { display: block; margin-bottom: 12px; font-size: .9rem; }
+    .modal input, .modal select {
+      width: 100%;
+      margin-top: 4px;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    .modal-btns button {
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: .95rem;
+    }
+    .btn-cancel { background: #ccc; }
+    .btn-save   { background: var(--primary); color: #fff; }
+    .btn-delete { background: var(--danger); color: #fff; margin-right: auto; }
+
+    /* Checkout modal specifics */
+    .payment-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+    .payment-row label { flex: 0 0 80px; font-size: .9rem; margin: 0; }
+    .payment-row input { flex: 1; }
+    .change-box {
+      background: var(--gray);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .change-box .change-amount { font-size: 1.5rem; color: var(--success); }
+
+    /* History modal */
+    .history-list { max-height: 55vh; overflow-y: auto; }
+    .history-item {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .history-item .hi-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: .8rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .history-item .hi-items { font-size: .85rem; color: var(--text); margin-bottom: 4px; }
+    .history-item .hi-total { font-weight: bold; color: var(--primary); text-align: right; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* Responsive: stack on small screens */
+    @media (max-width: 640px) {
+      .main { flex-direction: column; height: auto; overflow: auto; }
+      .order-panel { flex: none; border-left: none; border-top: 2px solid #ddd; }
+      .menu-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🍜 小吃店 POS 系統</h1>
+  <div class="header-btns">
+    <button onclick="openHistory()">📋 歷史訂單</button>
+    <button onclick="toggleEditMode()" id="editModeBtn">✏️ 編輯菜單</button>
+    <button onclick="openAddItem()">➕ 新增品項</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Menu panel -->
+  <div class="menu-panel">
+    <div class="category-bar" id="categoryBar"></div>
+    <div class="menu-grid" id="menuGrid"></div>
+  </div>
+
+  <!-- Order panel -->
+  <div class="order-panel">
+    <div class="order-header">
+      <h2>目前訂單</h2>
+      <span class="order-num" id="orderNum">#0001</span>
+    </div>
+    <div class="order-list" id="orderList"></div>
+    <div class="order-footer">
+      <div class="total-line">
+        <span>合計</span>
+        <span class="amount" id="totalDisplay">$0</span>
+      </div>
+      <div class="footer-btns">
+        <button class="btn-clear" onclick="clearOrder()">清空</button>
+        <button class="btn-checkout" id="checkoutBtn" onclick="openCheckout()" disabled>結帳</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Checkout modal ── -->
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal">
+    <h3>💰 結帳</h3>
+    <div id="checkoutSummary" style="font-size:.9rem;color:#555;margin-bottom:12px;max-height:140px;overflow-y:auto;"></div>
+    <div class="payment-row">
+      <label>應付金額</label>
+      <input type="text" id="payableDisplay" readonly style="font-weight:bold;background:#f9f9f9;">
+    </div>
+    <div class="payment-row">
+      <label>收取現金</label>
+      <input type="number" id="cashInput" placeholder="輸入收款金額" oninput="calcChange()" min="0">
+    </div>
+    <div class="change-box">
+      找零：<span class="change-amount" id="changeDisplay">-</span>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('checkoutModal')">取消</button>
+      <button class="btn-save"   onclick="confirmCheckout()" id="confirmBtn">確認收款</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add/Edit item modal ── -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <h3 id="itemModalTitle">新增品項</h3>
+    <label>名稱
+      <input type="text" id="itemName" placeholder="例：滷肉飯">
+    </label>
+    <label>價格 (元)
+      <input type="number" id="itemPrice" placeholder="例：50" min="1">
+    </label>
+    <label>分類
+      <select id="itemCat"></select>
+    </label>
+    <label>圖示 (Emoji)
+      <input type="text" id="itemIcon" placeholder="例：🍚" maxlength="4">
+    </label>
+    <div class="modal-btns">
+      <button class="btn-delete" id="deleteBtnModal" onclick="deleteItem()" style="display:none;">刪除</button>
+      <button class="btn-cancel" onclick="closeModal('itemModal')">取消</button>
+      <button class="btn-save"   onclick="saveItem()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add category modal ── -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal" style="width:min(320px,95vw)">
+    <h3>新增分類</h3>
+    <label>分類名稱
+      <input type="text" id="newCatName" placeholder="例：甜點">
+    </label>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('catModal')">取消</button>
+      <button class="btn-save"   onclick="addCategory()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── History modal ── -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal" style="width:min(520px,95vw)">
+    <h3>📋 歷史訂單</h3>
+    <div class="history-list" id="historyList"></div>
+    <div class="modal-btns">
+      <button class="btn-delete" onclick="clearHistory()">清除全部</button>
+      <button class="btn-cancel" onclick="closeModal('historyModal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Data & Storage
+═══════════════════════════════════════════════ */
+const DEFAULT_MENU = [
+  { id:1, cat:'主食', name:'滷肉飯',   price:45,  icon:'🍚' },
+  { id:2, cat:'主食', name:'雞腿飯',   price:75,  icon:'🍗' },
+  { id:3, cat:'主食', name:'排骨飯',   price:70,  icon:'🥩' },
+  { id:4, cat:'主食', name:'炒飯',     price:60,  icon:'🍳' },
+  { id:5, cat:'小吃', name:'貢丸湯',   price:30,  icon:'🍲' },
+  { id:6, cat:'小吃', name:'魚丸湯',   price:30,  icon:'🍵' },
+  { id:7, cat:'小吃', name:'餛飩湯',   price:35,  icon:'🥣' },
+  { id:8, cat:'小吃', name:'滷豆腐',   price:25,  icon:'🟡' },
+  { id:9, cat:'小吃', name:'滷蛋',     price:15,  icon:'🥚' },
+  { id:10,cat:'飲料', name:'紅茶',     price:20,  icon:'🧋' },
+  { id:11,cat:'飲料', name:'綠茶',     price:20,  icon:'🍵' },
+  { id:12,cat:'飲料', name:'可樂',     price:25,  icon:'🥤' },
+  { id:13,cat:'飲料', name:'礦泉水',   price:15,  icon:'💧' },
+  { id:14,cat:'甜點', name:'豆花',     price:35,  icon:'🍮' },
+  { id:15,cat:'甜點', name:'湯圓',     price:40,  icon:'⚪' },
+];
+const DEFAULT_CATS = ['全部', '主食', '小吃', '飲料', '甜點'];
+
+function loadMenu()   { return JSON.parse(localStorage.getItem('pos_menu')   || JSON.stringify(DEFAULT_MENU)); }
+function saveMenu(m)  { localStorage.setItem('pos_menu', JSON.stringify(m)); }
+function loadCats()   { return JSON.parse(localStorage.getItem('pos_cats')   || JSON.stringify(DEFAULT_CATS)); }
+function saveCats(c)  { localStorage.setItem('pos_cats', JSON.stringify(c)); }
+function loadOrders() { return JSON.parse(localStorage.getItem('pos_orders') || '[]'); }
+function saveOrders(o){ localStorage.setItem('pos_orders', JSON.stringify(o)); }
+function loadOrderNum(){ return parseInt(localStorage.getItem('pos_order_num') || '1', 10); }
+function saveOrderNum(n){ localStorage.setItem('pos_order_num', String(n)); }
+
+let menu      = loadMenu();
+let cats      = loadCats();
+let orders    = loadOrders();
+let orderNum  = loadOrderNum();
+let cart      = [];           // [{ id, name, price, qty }]
+let activeCat = '全部';
+let editMode  = false;
+let editingId = null;         // id of item being edited
+
+/* ═══════════════════════════════════════════════
+   Render
+═══════════════════════════════════════════════ */
+function renderCategoryBar() {
+  const bar = document.getElementById('categoryBar');
+  bar.innerHTML = '';
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (c === activeCat ? ' active' : '');
+    btn.textContent = c;
+    btn.onclick = () => { activeCat = c; renderAll(); };
+    bar.appendChild(btn);
+  });
+  // Add category button
+  const add = document.createElement('button');
+  add.className = 'cat-btn';
+  add.textContent = '＋ 新分類';
+  add.style.borderStyle = 'dashed';
+  add.onclick = () => openModal('catModal');
+  bar.appendChild(add);
+}
+
+function renderMenu() {
+  const grid = document.getElementById('menuGrid');
+  grid.innerHTML = '';
+  const filtered = activeCat === '全部' ? menu : menu.filter(i => i.cat === activeCat);
+  if (filtered.length === 0) {
+    grid.innerHTML = '<p style="color:#aaa;padding:20px">此分類尚無品項</p>';
+    return;
+  }
+  filtered.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'menu-item';
+    div.innerHTML = `
+      <div class="icon">${item.icon}</div>
+      <div class="name">${item.name}</div>
+      <div class="price">$${item.price}</div>
+      <button class="edit-btn" onclick="event.stopPropagation();openEditItem(${item.id})">✎</button>
+    `;
+    div.onclick = () => { if (!editMode) addToCart(item); };
+    grid.appendChild(div);
+  });
+  if (editMode) grid.classList.add('edit-mode');
+  else          grid.classList.remove('edit-mode');
+}
+
+function renderOrder() {
+  const list = document.getElementById('orderList');
+  list.innerHTML = '';
+  if (cart.length === 0) {
+    list.innerHTML = '<p style="color:#aaa;text-align:center;padding:24px;font-size:.9rem;">尚無品項，請從左方選取</p>';
+  } else {
+    cart.forEach((row, idx) => {
+      const div = document.createElement('div');
+      div.className = 'order-row';
+      div.innerHTML = `
+        <span class="item-name">${row.name}</span>
+        <div class="qty-ctrl">
+          <button class="minus" onclick="changeQty(${idx}, -1)">－</button>
+          <span>${row.qty}</span>
+          <button class="plus"  onclick="changeQty(${idx}, +1)">＋</button>
+        </div>
+        <span class="item-subtotal">$${row.price * row.qty}</span>
+      `;
+      list.appendChild(div);
+    });
+  }
+  const total = calcTotal();
+  document.getElementById('totalDisplay').textContent = '$' + total;
+  document.getElementById('checkoutBtn').disabled = cart.length === 0;
+  document.getElementById('orderNum').textContent = '#' + String(orderNum).padStart(4, '0');
+}
+
+function renderAll() {
+  renderCategoryBar();
+  renderMenu();
+  renderOrder();
+}
+
+/* ═══════════════════════════════════════════════
+   Cart
+═══════════════════════════════════════════════ */
+function addToCart(item) {
+  const idx = cart.findIndex(r => r.id === item.id);
+  if (idx >= 0) {
+    cart[idx].qty++;
+  } else {
+    cart.push({ id: item.id, name: item.name, price: item.price, qty: 1 });
+  }
+  renderOrder();
+}
+
+function changeQty(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  renderOrder();
+}
+
+function clearOrder() {
+  if (cart.length === 0) return;
+  if (confirm('確定要清空目前訂單嗎？')) {
+    cart = [];
+    renderOrder();
+  }
+}
+
+function calcTotal() {
+  return cart.reduce((s, r) => s + r.price * r.qty, 0);
+}
+
+/* ═══════════════════════════════════════════════
+   Checkout
+═══════════════════════════════════════════════ */
+function openCheckout() {
+  const total = calcTotal();
+  document.getElementById('payableDisplay').value = '$' + total;
+  document.getElementById('cashInput').value = '';
+  document.getElementById('changeDisplay').textContent = '-';
+  document.getElementById('confirmBtn').disabled = true;
+
+  // Summary
+  const summary = cart.map(r => `${r.name} × ${r.qty} = $${r.price * r.qty}`).join('<br>');
+  document.getElementById('checkoutSummary').innerHTML = summary;
+
+  openModal('checkoutModal');
+  setTimeout(() => document.getElementById('cashInput').focus(), 150);
+}
+
+function calcChange() {
+  const total = calcTotal();
+  const cash  = parseFloat(document.getElementById('cashInput').value) || 0;
+  const change = cash - total;
+  const el    = document.getElementById('changeDisplay');
+  if (cash === 0) {
+    el.textContent = '-';
+    el.style.color = 'var(--text)';
+    document.getElementById('confirmBtn').disabled = true;
+  } else if (change < 0) {
+    el.textContent = '金額不足 $' + Math.abs(change);
+    el.style.color = 'var(--danger)';
+    document.getElementById('confirmBtn').disabled = true;
+  } else {
+    el.textContent = '$' + change;
+    el.style.color = 'var(--success)';
+    document.getElementById('confirmBtn').disabled = false;
+  }
+}
+
+function confirmCheckout() {
+  const total = calcTotal();
+  const cash  = parseFloat(document.getElementById('cashInput').value) || 0;
+  const change = cash - total;
+  const record = {
+    num   : orderNum,
+    time  : new Date().toLocaleString('zh-TW'),
+    items : cart.map(r => ({ name: r.name, qty: r.qty, subtotal: r.price * r.qty })),
+    total : total,
+    cash  : cash,
+    change: change
+  };
+  orders.unshift(record);
+  saveOrders(orders);
+  orderNum++;
+  saveOrderNum(orderNum);
+  cart = [];
+  closeModal('checkoutModal');
+  renderAll();
+  showToast('✅ 結帳完成！找零 $' + change);
+}
+
+/* ═══════════════════════════════════════════════
+   Menu editing
+═══════════════════════════════════════════════ */
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('editModeBtn').textContent = editMode ? '✅ 完成編輯' : '✏️ 編輯菜單';
+  renderMenu();
+}
+
+function openAddItem() {
+  editingId = null;
+  document.getElementById('itemModalTitle').textContent = '新增品項';
+  document.getElementById('itemName').value  = '';
+  document.getElementById('itemPrice').value = '';
+  document.getElementById('itemIcon').value  = '🍽️';
+  document.getElementById('deleteBtnModal').style.display = 'none';
+  populateCatSelect();
+  openModal('itemModal');
+}
+
+function openEditItem(id) {
+  const item = menu.find(i => i.id === id);
+  if (!item) return;
+  editingId = id;
+  document.getElementById('itemModalTitle').textContent = '編輯品項';
+  document.getElementById('itemName').value  = item.name;
+  document.getElementById('itemPrice').value = item.price;
+  document.getElementById('itemIcon').value  = item.icon;
+  document.getElementById('deleteBtnModal').style.display = 'inline-block';
+  populateCatSelect(item.cat);
+  openModal('itemModal');
+}
+
+function populateCatSelect(selected) {
+  const sel = document.getElementById('itemCat');
+  sel.innerHTML = '';
+  cats.filter(c => c !== '全部').forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    if (c === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function saveItem() {
+  const name  = document.getElementById('itemName').value.trim();
+  const price = parseInt(document.getElementById('itemPrice').value, 10);
+  const cat   = document.getElementById('itemCat').value;
+  const icon  = document.getElementById('itemIcon').value.trim() || '🍽️';
+  if (!name)        { alert('請輸入品項名稱'); return; }
+  if (!price || price < 1) { alert('請輸入正確價格'); return; }
+
+  if (editingId !== null) {
+    const idx = menu.findIndex(i => i.id === editingId);
+    if (idx >= 0) menu[idx] = { ...menu[idx], name, price, cat, icon };
+  } else {
+    const newId = menu.length ? Math.max(...menu.map(i => i.id)) + 1 : 1;
+    menu.push({ id: newId, name, price, cat, icon });
+  }
+  saveMenu(menu);
+  closeModal('itemModal');
+  renderAll();
+}
+
+function deleteItem() {
+  if (!confirm('確定要刪除此品項嗎？')) return;
+  menu = menu.filter(i => i.id !== editingId);
+  saveMenu(menu);
+  closeModal('itemModal');
+  renderAll();
+}
+
+/* ═══════════════════════════════════════════════
+   Category
+═══════════════════════════════════════════════ */
+function addCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) { alert('請輸入分類名稱'); return; }
+  if (cats.includes(name)) { alert('此分類已存在'); return; }
+  cats.push(name);
+  saveCats(cats);
+  closeModal('catModal');
+  renderCategoryBar();
+}
+
+/* ═══════════════════════════════════════════════
+   History
+═══════════════════════════════════════════════ */
+function openHistory() {
+  const list = document.getElementById('historyList');
+  orders = loadOrders();
+  if (orders.length === 0) {
+    list.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px">尚無歷史訂單</p>';
+  } else {
+    list.innerHTML = orders.map(o => `
+      <div class="history-item">
+        <div class="hi-header">
+          <span>#${String(o.num).padStart(4,'0')}</span>
+          <span>${o.time}</span>
+        </div>
+        <div class="hi-items">${o.items.map(i => `${i.name} × ${i.qty}`).join('、')}</div>
+        <div class="hi-total">合計 $${o.total}　｜　收 $${o.cash}　找零 $${o.change}</div>
+      </div>
+    `).join('');
+  }
+  openModal('historyModal');
+}
+
+function clearHistory() {
+  if (!confirm('確定要清除所有歷史訂單嗎？')) return;
+  orders = [];
+  saveOrders([]);
+  openHistory();
+}
+
+/* ═══════════════════════════════════════════════
+   Modal helpers
+═══════════════════════════════════════════════ */
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+/* ═══════════════════════════════════════════════
+   Toast notification
+═══════════════════════════════════════════════ */
+function showToast(msg) {
+  let toast = document.getElementById('_toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = '_toast';
+    Object.assign(toast.style, {
+      position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)',
+      background:'#333', color:'#fff', padding:'10px 22px', borderRadius:'8px',
+      fontSize:'.95rem', zIndex:9999, opacity:0, transition:'opacity .3s'
+    });
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = 1;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = 0; }, 2500);
+}
+
+/* ═══════════════════════════════════════════════
+   Init
+═══════════════════════════════════════════════ */
+renderAll();
+</script>
+</body>
+</html>
