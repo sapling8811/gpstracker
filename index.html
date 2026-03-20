@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sapling8811 — 工具首頁</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf0 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      color: #2c3e50;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    p.subtitle {
+      color: #7f8c8d;
+      font-size: .95rem;
+      margin-bottom: 36px;
+      text-align: center;
+    }
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      max-width: 700px;
+      width: 100%;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 24px;
+      width: 280px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.1);
+      transition: transform .15s, box-shadow .15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    }
+    .card .icon { font-size: 3rem; margin-bottom: 14px; }
+    .card h2 { font-size: 1.15rem; color: #2c3e50; margin-bottom: 8px; }
+    .card p { font-size: .85rem; color: #7f8c8d; line-height: 1.5; }
+    .card .badge {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .badge-orange { background: #e67e22; }
+    .badge-blue   { background: #2980b9; }
+    footer {
+      margin-top: 40px;
+      font-size: .8rem;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛠️ 工具首頁</h1>
+  <p class="subtitle">選擇以下工具開始使用</p>
+
+  <div class="cards">
+    <a class="card" href="pos.html">
+      <div class="icon">🍜</div>
+      <h2>小吃店 POS 系統</h2>
+      <p>點餐、結帳、歷史訂單、菜單管理，離線可用</p>
+      <span class="badge badge-orange">開啟 POS</span>
+    </a>
+
+    <a class="card" href="sender.html">
+      <div class="icon">📍</div>
+      <h2>GPS 追蹤傳送</h2>
+      <p>每分鐘自動傳送目前位置至後端 Worker</p>
+      <span class="badge badge-blue">開啟 GPS</span>
+    </a>
+  </div>
+
+  <footer>
+    托管於 GitHub Pages &nbsp;|&nbsp;
+    <a href="https://github.com/sapling8811/gpstracker" style="color:#aaa;">原始碼</a>
+  </footer>
+</body>
+</html>
